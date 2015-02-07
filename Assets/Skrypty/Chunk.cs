@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using SimplexNoise;
 
 [RequireComponent (typeof(MeshCollider))]
 [RequireComponent (typeof(MeshRenderer))]
@@ -25,10 +26,20 @@ public class Chunk : MonoBehaviour {
 		
 		for(int x = 0; x < World.activeWorld.ch_width; x++)
 		{
-			for (int z = 0; z < World.activeWorld.ch_width; z++)
+			float perlinX = (float)x / 15;
+			for (int y = 0; y < World.activeWorld.ch_height; y++)
 			{
-				map[x, 0, z] = 1;
-				map[x, 1, z] = (byte)Random.Range (0,2);
+				float perlinY = (float)y / 15;
+				for (int z = 0; z < World.activeWorld.ch_width; z++)
+				{
+					float perlinZ = (float)z / 15;
+					float perlin = Noise.Generate(perlinX,perlinY,perlinZ);
+					
+					perlin += (10f - (float)y) / 10;
+					
+					if( perlin > 0.2f)
+						map[x,y,z] = 1;
+				}
 			}
 		}
 		GenerateMesh();
