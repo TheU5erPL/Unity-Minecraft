@@ -124,10 +124,15 @@ public class Chunk : MonoBehaviour {
 		verts.Add (corner + up + right);
 		verts.Add (corner + right);
 		
-		uvs.Add (new Vector2(0,0));
-		uvs.Add (new Vector2(0,1));
-		uvs.Add (new Vector2(1,1));
-		uvs.Add (new Vector2(1,0));
+		Vector2 uv_width = new Vector2(0.25f, 0.25f);
+		Vector2 uv_corner = new Vector2(0.25f,0.75f);
+		
+		uv_corner.x += (float)(block - 1) / 4;
+		
+		uvs.Add (uv_corner);
+		uvs.Add(new Vector2 (uv_corner.x, uv_corner.y + uv_width.y));
+		uvs.Add(new Vector2 (uv_corner.x + uv_width.x, uv_corner.y + uv_width.y));
+		uvs.Add(new Vector2 (uv_corner.x + uv_width.x, uv_corner.y));
 		
 		if(rev)
 		{
