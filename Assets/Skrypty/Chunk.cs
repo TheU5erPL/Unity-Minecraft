@@ -14,49 +14,63 @@ public class Chunk : MonoBehaviour {
 	protected MeshRenderer meshRenderer;
 	protected MeshFilter meshFilter;
 	public byte [,,] map;
+
+	public static int chunkWidth {
+		get { return World.activeWorld.ch_width; }
+	}
 	
-	// Use this for initialization
+	public static int chunkHeight {
+		get { return World.activeWorld.ch_height; }
+	}
+
+	public static List<Chunk> chunks = new List<Chunk>();
+	
 	void Start () {
+		
+		chunks.Add (this);
 		
 		meshCollider = GetComponent<MeshCollider>();
 		meshRenderer = GetComponent<MeshRenderer>();
 		meshFilter = GetComponent<MeshFilter>();
 		
-		map = new byte[World.activeWorld.ch_width, World.activeWorld.ch_width, World.activeWorld.ch_height];
+		map = new byte[chunkWidth, chunkHeight, chunkWidth];
 		
-		for(int x = 0; x < World.activeWorld.ch_width; x++)
+		Random.seed = World.activeWorld.randomSeed;
+		Vector3 offset = new Vector3(Random.value * 10000, Random.value * 10000, Random.value * 10000);
+		
+		for(int x = 0; x < chunkWidth; x++)
 		{
-			float perlinX = (float)x / 15;
-			for (int y = 0; y < World.activeWorld.ch_height; y++)
+			float perlinX = Mathf.Abs((float)(x + transform.position.x + offset.x) / 30);
+			for (int y = 0; y < chunkHeight; y++)
 			{
-				float perlinY = (float)y / 15;
-				for (int z = 0; z < World.activeWorld.ch_width; z++)
+				float perlinY = Mathf.Abs((float)(y + transform.position.y + offset.y) / 50);
+				for (int z = 0; z < chunkWidth; z++)
 				{
-					float perlinZ = (float)z / 15;
+					float perlinZ = Mathf.Abs((float)(z +transform.position.z + offset.z) / 30);
 					float perlin = Noise.Generate(perlinX,perlinY,perlinZ);
 					
 					perlin += (10f - (float)y) / 10;
 					
-					if( perlin > 0.2f)
+					if( perlin > 0.05f)
 						map[x,y,z] = 1;
 				}
 			}
 		}
-		GenerateMesh();
+		StartCoroutine(GenerateMesh());//StartCoroutine(GenerateMesh());
 	}
 	
-	public virtual void GenerateMesh() {
+	public virtual IEnumerator GenerateMesh() { //IEnumerator
 		v_Mesh = new Mesh();
 		
 		List<Vector3> verts = new List<Vector3>();
 		List<Vector2> UVs = new List<Vector2>();
 		List<int> tris = new List<int>();
 		
-		for(int x = 0; x < World.activeWorld.ch_width; x++)
+		for(int x = 0; x < chunkWidth; x++)
 		{
-			for(int y = 0; y < World.activeWorld.ch_height; y++)
+			for(int y = 0; y < chunkHeight; y++)
 			{
-				for (int z = 0; z < World.activeWorld.ch_width; z++)
+				for (int z = 0; z < chunkWidth; z++)
 				{
 					if(map[x, y, z] == 0)
 						continue;
@@ -97,6 +111,9 @@ public class Chunk : MonoBehaviour {
 		
 		meshFilter.mesh = v_Mesh;
 		meshCollider.sharedMesh = v_Mesh;
+
+		yield return new WaitForEndOfFrame();
+
 	}
 	
 	public virtual void GenerateFace(byte block, Vector3 corner, Vector3 up, Vector3 right, bool rev, List<Vector3> verts, List<Vector2> uvs, List<int> tris)
@@ -146,12 +163,25 @@ public class Chunk : MonoBehaviour {
 	public virtual byte GetBlock(int x, int y, int z)
 	{
 		if ( 
-		    (x >= World.activeWorld.ch_width) ||
-		    (y >= World.activeWorld.ch_height) ||
-		    (z >= World.activeWorld.ch_width) ||
+		    (x >= chunkWidth) ||
+		    (y >= chunkHeight) ||
+		    (z >= chunkWidth) ||
 		    ( x < 0) || ( y < 0) || (z < 0)
 		    )
 			return 0;
 		return map[x,y,z];
+	}
+
+	public static Chunk GetChunk(Vector3 position)
+	{
+		for (int i = 0; i < chunks.Count; i++)
+		{
+			Vector3 chunkPos = chunks[i].transform.position;
+			if ( ( position.x < chunkPos.x) || (position.z < chunkPos.z) ||
+			    (position.x >= chunkPos.x + chunkWidth) || (position.z >= chunkPos.z + chunkWidth)) 
+				continue;
+			return chunks[i];
+		}
+		return null;
 	}
 }
