@@ -7,12 +7,14 @@ using System.Collections.Generic;
 [RequireComponent (typeof(MeshFilter))]
 public class Chunk : MonoBehaviour {
 	
+	
 	public Mesh v_Mesh;
 	protected MeshCollider meshCollider;
 	protected MeshRenderer meshRenderer;
 	protected MeshFilter meshFilter;
 	public byte [,,] map;
-
+	
+	// Use this for initialization
 	void Start () {
 		
 		meshCollider = GetComponent<MeshCollider>();
@@ -45,7 +47,21 @@ public class Chunk : MonoBehaviour {
 			{
 				for (int z = 0; z < World.activeWorld.ch_width; z++)
 				{
+					if(map[x, y, z] == 0)
+						continue;
+					byte block = map[x,y,z];
 					
+					//bok 1
+					GenerateFace(block, new Vector3(x,y,z), Vector3.up, Vector3.forward, false, verts, UVs, tris);
+					GenerateFace(block, new Vector3(x + 1,y,z), Vector3.up, Vector3.forward, true, verts, UVs, tris);
+					
+					//bok 2
+					GenerateFace(block, new Vector3(x,y,z), Vector3.up, Vector3.right, true, verts, UVs, tris);
+					GenerateFace(block, new Vector3(x,y,z + 1), Vector3.up, Vector3.right, false, verts, UVs, tris);
+					
+					// gora
+					GenerateFace(block, new Vector3(x,y,z), Vector3.forward, Vector3.right, false, verts, UVs, tris);
+					GenerateFace(block, new Vector3(x, y + 1, z), Vector3.forward, Vector3.right, true, verts, UVs, tris);
 				}
 			}
 		}
@@ -59,4 +75,36 @@ public class Chunk : MonoBehaviour {
 		meshFilter.mesh = v_Mesh;
 		meshCollider.sharedMesh = v_Mesh;
 	}
+	
+	public virtual void GenerateFace(byte block, Vector3 corner, Vector3 up, Vector3 right, bool rev, List<Vector3> verts, List<Vector2> uvs, List<int> tris)
+	{
+		int index = verts.Count;
+		verts.Add (corner);
+		verts.Add (corner + up);
+		verts.Add (corner + up + right);
+		verts.Add (corner + right);
+		
+		uvs.Add (new Vector2(0,0));
+		uvs.Add (new Vector2(0,1));
+		uvs.Add (new Vector2(1,1));
+		uvs.Add (new Vector2(1,0));
+		
+		if(rev)
+		{
+			tris.Add (index + 0);
+			tris.Add (index + 1);
+			tris.Add (index + 2);
+			tris.Add (index + 2);
+			tris.Add (index + 3);
+			tris.Add (index + 0);
+		} else {
+			tris.Add (index + 1);
+			tris.Add (index + 0);
+			tris.Add (index + 2);
+			tris.Add (index + 3);
+			tris.Add (index + 2);
+			tris.Add (index + 0);
+		}
+	}
+	
 }
